@@ -46,6 +46,5 @@ class NewVisitorTest(unittest.TestCase):
 
         # She is done!
 
-
 if __name__ == '__main__':
     unittest.main()
