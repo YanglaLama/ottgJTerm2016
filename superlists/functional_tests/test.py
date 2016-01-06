@@ -1,9 +1,8 @@
+from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-import unittest
 
-
-class NewVisitorTest(unittest.TestCase):
+class NewVisitorTest(LiveServerTestCase):
 
     def setUp(self):
         self.browser = webdriver.Firefox()
@@ -25,10 +24,7 @@ class NewVisitorTest(unittest.TestCase):
     def test_can_start_a_list_and_retrieve_it_later(self):
         # Edith has a cool new online to-do app
         # She checks out the homepage
-        # starts Firefox
-
-        #got to this website via Firefox
-        self.browser.get('http://localhost:8000')
+        self.browser.get(self.live_server_url)
 
         # She notices page title and header mention to-do lists
         self.assertIn('To-Do', self.browser.title)
@@ -48,8 +44,11 @@ class NewVisitorTest(unittest.TestCase):
 
         # Sometimes she may forget and leave the text box empty!
 
-        # When she hits enter, the page updates and now the page lists
-        # "1. Buy peacock feathers" as an item
+        # When she hits enter, she is taken to a new URL,
+        # and now the page lists "1. Buy peacock feathers" as
+        # a to-do list table
+        edith_list_url = self.browser.current_url
+        self.assertRegexpMatches(edith_list_url, '/lists/.+')
         self.check_for_row_in_list_table('1: Buy peacock feathers')
 
         # She can still add more to do items
@@ -58,15 +57,37 @@ class NewVisitorTest(unittest.TestCase):
         self.enter_a_new_item('Use peacock feathers to make a fly')
 
         # The homepage uodates again, and now shows both items on her list
-
         self.check_for_row_in_list_table('1: Buy peacock feathers')
         self.check_for_row_in_list_table('2: Use peacock feathers to make a fly')
 
-        # Edith wonders whether the site will remember her list.
-        # The site generates a unique URL for her- there is some explanation
-        # She visits the URL- her to-do list is still there
-        # She is done!
-        self.fail('Finish the app!')
+        # Now a new user, Pala, comes along to the site
 
-if __name__ == '__main__':
-    unittest.main()
+        # We use a new browser session to make sure that no information
+        # of Edith's is coming through from cookies etc
+        self.browser.quit()
+        self.browser = webdriver.Firefox()
+
+        # Pala vists the home page. There is no sign of Edith's list
+        self.browser.get(self.live_server_url)
+        page_text = self.browser.find_element_by_tag_name('body').text
+        self.assertNotIn('Buy peacock feathers', page_text)
+        self.assertNotIn('make a fly', page_text)
+
+        # Pala starts a new list by entering a new item.
+        # He is less interesting that Eidth
+        self.enter_a_new_item('Buy milk')
+
+        # Pala gets his own unique URL
+        pala_list_url = self.browser.current_url
+        self.assertRegexpMatches(pala_list_url, '/lists/.+')
+        self.assertNotEqual(pala_list_url, edith_list_url)
+
+        # Again there is no trace of Edith's list
+        page_text = self.browser.find_element_by_tag_name('body').text
+        self.assertNotIn('Buy peacock feathers', page_text)
+        self.assertIn('Buy milk', page_text)
+
+        # She visits the URL- her to-do list is still there
+
+
+        # She is done!
