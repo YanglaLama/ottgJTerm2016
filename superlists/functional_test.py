@@ -17,7 +17,9 @@ class NewVisitorTest(unittest.TestCase):
         rows = table.find_elements_by_tag_name('tr')
         self.assertIn(row_text, [row.text for row in rows])
 
-    def send_keys_to_inputbox(self):
+    def enter_a_new_item (self, todo_text):
+        inputbox = self.browser.find_element_by_id('id_new_item')
+        inputbox.send_keys(todo_text)
         inputbox.send_keys(Keys.ENTER)
 
     def test_can_start_a_list_and_retrieve_it_later(self):
@@ -33,10 +35,6 @@ class NewVisitorTest(unittest.TestCase):
         header_text = self.browser.find_element_by_tag_name('h1').text
         self.assertIn('To-Do', header_text)
 
-        # same as line 8
-        # if ! 'To-Dp in browser.title:
-        #    throw new AssertionError
-
         # Edith really likes fly fishing
         # She is invited to enter a to-do item
         inputbox = self.browser.find_element_by_id('id_new_item')
@@ -46,21 +44,18 @@ class NewVisitorTest(unittest.TestCase):
         )
 
         # She types "Buy peacock feathers" into a text box
-        inputbox.send_keys('Buy peacock feathers')
+        self.enter_a_new_item('Buy peacock feathers')
 
-        # Sometimes she may forget and leave an empty
+        # Sometimes she may forget and leave the text box empty!
 
         # When she hits enter, the page updates and now the page lists
         # "1. Buy peacock feathers" as an item
-        inputbox.send_keys(Keys.ENTER)
         self.check_for_row_in_list_table('1: Buy peacock feathers')
 
         # She can still add more to do items
         # She writes "Use peacock feathers to make fly"
         # (Edith is very methodolical)
-        inputbox = self.browser.find_element_by_id('id_new_item')
-        inputbox.send_keys('Use peacock feathers to make a fly')
-        inputbox.send_keys(Keys.ENTER)
+        self.enter_a_new_item('Use peacock feathers to make fly')
 
         # The homepage uodates again, and now shows both items on her list
 
