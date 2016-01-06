@@ -55,7 +55,7 @@ class NewVisitorTest(unittest.TestCase):
         # She can still add more to do items
         # She writes "Use peacock feathers to make fly"
         # (Edith is very methodolical)
-        self.enter_a_new_item('Use peacock feathers to make fly')
+        self.enter_a_new_item('Use peacock feathers to make a fly')
 
         # The homepage uodates again, and now shows both items on her list
 
