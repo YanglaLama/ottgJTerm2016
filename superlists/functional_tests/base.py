@@ -21,3 +21,5 @@ class ToDoFunctionalTest(StaticLiveServerTestCase):
         inputbox = self.browser.find_element_by_id('id_new_item')
         inputbox.send_keys(todo_text)
         inputbox.send_keys(Keys.ENTER)
+
+    
