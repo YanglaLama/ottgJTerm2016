@@ -1,12 +1,32 @@
 {% extends 'base.html' %}
 
-{% block header_text %} Your To-Do List {% endblock %}
-{% block form_action %} /lists/{{list.id}}/ {% endblock %}
+{% block header_text %}Your To-Do list{% endblock %}
+{% block form_action %}/lists/{{ list.id }}/{% endblock %}
 
-{% block table %}
-    <table id = "id_list_table" class="table">
-        {% for item in list.item_set.all %}
-          <tr><td>{{ forloop.counter }}. </td><td>{{ item.text}}</td></tr>
-        {% endfor %}
-    </table>
-{% endblock %}
+ {% block table %}
+ <form id = "edit_items" method = "POST" action = "/lists/{{ list.id }}/items/">
+   <table id = "id_list_table" class = "table">
+     {% for item in list.item_set.all %}
+     <tr>
+       <td>{{ forloop.counter }}. </td>
+       <td>
+         <input type = "checkbox"
+           name = "mark_item_done"
+           value = "{{ item.id }}"
+           {% if item.is_done %}checked="checked"{% endif %}
+           />
+       </td>
+       <td {% if item.is_done %}class = "todo-done" {% endif %}>
+         {{ item.text }}
+       </td>
+     </tr>
+     {% endfor %}
+   </table>
+   <button
+     id = "toggle_done"
+     type = "submit"
+     class = "btn btn-primary"
+   > Toggle Done</button>
+   {% csrf_token %}
+ </form>
+ {% endblock %}

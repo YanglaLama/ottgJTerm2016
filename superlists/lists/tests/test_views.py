@@ -18,12 +18,6 @@ class HomePageTest(TestCase):
 
         expected_html = render_to_string('home.html')
 
-        self.assertEqual(response.content.decode(), expected_html)
-
-    def test_home_page_doesnt_save_on_GET_request(self):
-        request = HttpRequest()
-        home_page(request)
-        self.assertEqual(Item.objects.count(), 0)
 
 class NewListTest(TestCase):
 
@@ -57,6 +51,15 @@ class NewListTest(TestCase):
         self.client.post('/lists/new', data={'item_text': ''})
         self.assertEqual(List.objects.count(), 0)
         self.assertEqual(Item.objects.count(), 0)
+
+    def test_new_list_has_name_of_first_item(self):
+        response = self.client.post(
+            '/lists/new',
+            data = {'item_text': 'A new list item'}
+        )
+
+        new_list = List.objects.first()
+        self.assertEqual(new_list.item, 'A new lists item')
 
 class ListViewTest(TestCase):
 
@@ -117,3 +120,94 @@ class ListViewTest(TestCase):
             data={'item_text': ''}
         )
         self.assertEqual(Item.objects.count(), 0)
+
+    def test_list_view_displays_checkbox(self):
+        current_list = List.objects.create()
+        Item.objects.create(text="Item 1", list=current_list)
+        Item.objects.create(text="Item 2", list=current_list)
+
+        response = self.client.get('/lists/%d/' % (current_list.id,))
+        self.assertContains(response, 'input type="checkbox"')
+
+    def test_POST_items_marks_done(self):
+        #create list and items
+        current_list = List.objects.create()
+        item1 = Item.objects.create(text = "Item 1", list = current_list)
+        item2 = Item.objects.create(text = "Item 2", list = current_list)
+
+        #post data
+        response = self.client.post(
+            '/lists/%d/items/' % (current_list.id),
+            data = {'mark_item_done': item1.id}
+        )
+
+        # -including toggle item
+        self.assertRedirects(response, '/lists/%d/' % (current_list.id, ))
+
+        #check that item itself is updated
+        item1 = Item.objects.get(id=item1.id)
+        item2 = Item.objects.get(id=item2.id)
+        self.assertTrue(item1.is_done)
+        self.assertFalse(item2.is_done)
+
+    def test_POST_multiple_items_done(self):
+        current_list = List.objects.create()
+        item1 = Item.objects.create(text = "Item 1", list = current_list)
+        item2 = Item.objects.create(text = "Item 2", list = current_list)
+
+        response = self.client.post(
+            '/lists/%d/items/' % (current_list.id,),
+            data = { 'mark_item_done': [item1.id, item2.id] }
+        )
+
+        item1 = Item.objects.get(id=item1.id)
+        item2 = Item.objects.get(id=item2.id)
+        self.assertTrue(item1.is_done)
+        self.assertTrue(item2.is_done)
+
+
+    def test_POST_zero_items_done(self):
+        current_list = List.objects.create()
+        item1 = Item.objects.create(text = "Item 1", list = current_list)
+        item2 = Item.objects.create(text = "Item 2", list = current_list)
+
+        response = self.client.post(
+            '/lists/%d/items/' % (current_list.id,),
+            data = { }
+        )
+
+        item1 = Item.objects.get(id=item1.id)
+        item2 = Item.objects.get(id=item2.id)
+        self.assertFalse(item1.is_done)
+        self.assertFalse(item2.is_done)
+
+    def test_POST_items_toggles_done(self):
+        #create list and items
+        current_list = List.objects.create()
+        item1 = Item.objects.create(
+            text = "Item 1",
+            list = current_list,
+            is_done = True
+        )
+
+        item2 = Item.objects.create(
+            text = "Item 2",
+            list = current_list,
+            is_done = False
+        )
+
+
+        #post data
+        response = self.client.post(
+            '/lists/%d/items/' % (current_list.id),
+            data = {'mark_item_done': [item2.id]}
+        )
+
+        # -including toggle item
+        self.assertRedirects(response, '/lists/%d/' % (current_list.id, ))
+
+        #check that item itself is updated
+        item1 = Item.objects.get(id=item1.id)
+        item2 = Item.objects.get(id=item2.id)
+        self.assertFalse(item1.is_done)
+        self.assertTrue(item2.is_done)
